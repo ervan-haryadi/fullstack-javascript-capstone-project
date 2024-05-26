@@ -27,14 +27,14 @@ router.post('/register', async (req, res) => {
         const collection = db.collection('users');
 
         //Task 3: Check for existing email
-        const existingEmail = await collection.findOne({email:req.body.email});
-        if(existingEmail) {
-            res.status(409).json({message:"Email already exists"});
+        const existingEmail = await collection.findOne({ email: req.body.email });
+        if (existingEmail) {
+            res.status(409).json({ message: "Email already exists" });
             return;
         }
 
-        const salt = await bcryptjs.genSalt(10);
-        const hash = await bcryptjs.hash(req.body.password, salt);
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(req.body.password, salt);
         const email = req.body.email;
 
         const newUser = await collection.insertOne({
@@ -44,7 +44,7 @@ router.post('/register', async (req, res) => {
             password: hash,
             createdAt: new Date(),
         });
-        
+
         const payload = {
             user: {
                 id: newUser.insertedId,
@@ -59,5 +59,84 @@ router.post('/register', async (req, res) => {
         return res.status(500).send('Internal server error');
     }
 });
+
+router.post('/login', async (req, res) => {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection('users');
+
+        const email = req.body.email;
+        const existingUser = await collection.findOne({ email: email });
+        if (existingUser) {
+            let result = bcrypt.compare(req.body.password, existingUser.password);
+            if (!result) {
+                logger.error("Password do not match");
+                return res.status(404).json({ error: "Wrong password" });
+            }
+
+            const userName = existingUser.firstName;
+            const userEmail = existingUser.email;
+
+            let payload = {
+                user: {
+                    id: existingUser._id.toString(),
+                }
+            };
+
+            const authtoken = jwt.sign(payload, JWT_SECRET);
+            res.json({ authtoken, userName, userEmail });
+        } else {
+            logger.error("User not found");
+            return res.status(404).json({ error: 'User not found' });
+        }
+    } catch (e) {
+        logger.error(e);
+        return res.status(500).json({ error: 'Internal server error', details: e.message });
+    }
+})
+
+router.put('/update', async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        logger.error('Validation errors in update request', errors.array());
+        return res.status(400).json({ errors: errors.array() });
+    }
+    try {
+        const email = req.headers.email;
+
+        if (!email) {
+            logger.error('Email not found in the request headers');
+            return res.status(400).json({ error: "Email not found in the request headers" });
+        }
+
+        const db = await connectToDatabase();
+        const collection = db.collection("users");
+        const existingUser = await collection.findOne({ email });
+        if(!existingUser) {
+            logger.error('User not found');
+            return res.status(404).json({error:'User not found'});
+        }
+
+        existingUser.firstName = req.body.name;
+        existingUser.updatedAt = new Date();
+
+        const updatedUser = await collection.findOneAndUpdate(
+            { email },
+            { $set: existingUser },
+            { returnDocument: 'after' }
+        );
+
+        const payload = {
+            user: {
+                id: updatedUser._id.toString(),
+            },
+        };
+        const authtoken = jwt.sign(payload, JWT_SECRET);
+        res.json({ authtoken });
+    } catch (err) {
+        logger.error(err);
+        return res.status(500).send("Internal Server Error");
+    }
+})
 
 module.exports = router;
