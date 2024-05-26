@@ -27,9 +27,9 @@ router.post('/register', async (req, res) => {
         const collection = db.collection('users');
 
         //Task 3: Check for existing email
-        const existingEmail = await collection.findOne({email:req.body.email});
-        if(existingEmail) {
-            res.status(409).json({message:"Email already exists"});
+        const existingEmail = await collection.findOne({ email: req.body.email });
+        if (existingEmail) {
+            res.status(409).json({ message: "Email already exists" });
             return;
         }
 
@@ -44,7 +44,7 @@ router.post('/register', async (req, res) => {
             password: hash,
             createdAt: new Date(),
         });
-        
+
         const payload = {
             user: {
                 id: newUser.insertedId,
@@ -59,5 +59,40 @@ router.post('/register', async (req, res) => {
         return res.status(500).send('Internal server error');
     }
 });
+
+router.post('/login', async (req, res) => {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection('users');
+
+        const email = req.body.email;
+        const existingUser = await collection.findOne({ email: email });
+        if (existingUser) {
+            let result = bcrypt.compare(req.body.password, existingUser.password);
+            if (!result) {
+                logger.error("Password do not match");
+                return res.status(404).json({ error: "Wrong password" });
+            }
+
+            const userName = existingUser.firstName;
+            const userEmail = existingUser.email;
+
+            let payload = {
+                user: {
+                    id: existingUser._id.toString(),
+                }
+            };
+
+            const authtoken = jwt.sign(payload, JWT_SECRET);
+            res.json({authtoken, userName, userEmail});
+        } else {
+            logger.error("User not found");
+            return res.status(404).json({ error: 'User not found' });
+        }
+    } catch (e) {
+        logger.error(e);
+        return res.status(500).json({ error: 'Internal server error', details: e.message });
+    }
+})
 
 module.exports = router;
