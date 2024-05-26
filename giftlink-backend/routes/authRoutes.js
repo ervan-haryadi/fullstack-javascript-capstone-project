@@ -33,8 +33,8 @@ router.post('/register', async (req, res) => {
             return;
         }
 
-        const salt = await bcryptjs.genSalt(10);
-        const hash = await bcryptjs.hash(req.body.password, salt);
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(req.body.password, salt);
         const email = req.body.email;
 
         const newUser = await collection.insertOne({
