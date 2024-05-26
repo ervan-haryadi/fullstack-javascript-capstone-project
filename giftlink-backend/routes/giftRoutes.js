@@ -1,3 +1,5 @@
+const express = require('express');
+const router = express.Router();
 const { connectToDatabase } = require('../models/db');
 
 router.get('/', async (req, res) => {
@@ -9,7 +11,7 @@ router.get('/', async (req, res) => {
         const gifts = await collections.find({}).toArray();
 
         res.json(gifts);
-        
+
     } catch (e) {
         console.error('Error fetching gifts:', e);
         res.status(500).send('Error fetching gifts');
@@ -18,16 +20,13 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     try {
-        // Task 1: Connect to MongoDB and store connection to db constant
-        // const db = {{insert code here}}
+        const db = await connectToDatabase();
 
-        // Task 2: use the collection() method to retrieve the gift collection
-        // {{insert code here}}
+        const collections = db.collections('gifts');
 
         const id = req.params.id;
 
-        // Task 3: Find a specific gift by ID using the collection.fineOne method and store in constant called gift
-        // {{insert code here}}
+        const gift = await collections.findOne({ id: id });
 
         if (!gift) {
             return res.status(404).send('Gift not found');
