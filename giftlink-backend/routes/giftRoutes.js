@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { connectToDatabase } = require('../models/db');
+const connectToDatabase = require('../models/db');
 const logger = require('../logger');
 
 router.get('/', async (req, res) => {
@@ -8,9 +8,9 @@ router.get('/', async (req, res) => {
     try {
         const db = await connectToDatabase();
 
-        const collections = db.collections('gifts');
+        const collection = db.collection('gifts');
 
-        const gifts = await collections.find({}).toArray();
+        const gifts = await collection.find({}).toArray();
 
         res.json(gifts);
 
@@ -24,7 +24,7 @@ router.get('/:id', async (req, res) => {
     try {
         const db = await connectToDatabase();
 
-        const collections = db.collections('gifts');
+        const collections = db.collection('gifts');
 
         const id = req.params.id;
 
