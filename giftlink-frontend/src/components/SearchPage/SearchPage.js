@@ -10,7 +10,7 @@ function SearchPage() {
     const conditions = ['New', 'Like New', 'Older'];
     const [ageRange, setAgeRange] = useState(6);
     const [searchQuery, setSearchQuery] = useState('');
-    const [searchResult, setSearchResult] = useState([]);
+    const [searchResults, setSearchResults] = useState([]);
 
     useEffect(() => {
         // fetch all products
