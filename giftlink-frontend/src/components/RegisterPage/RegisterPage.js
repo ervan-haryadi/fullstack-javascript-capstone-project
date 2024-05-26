@@ -11,7 +11,8 @@ function RegisterPage() {
     const [password, setPassword] = useState("");
 
     // insert code here to create handleRegister function and include console.log
-    const handleRegister = async () => {
+    const handleRegister = async (e) => {
+        e.preventDefault();
         console.log("This button will handle register");
     }
 
@@ -48,7 +49,7 @@ function RegisterPage() {
                             <label htmlFor="email" className="form label">Email</label><br />
                             <input
                                 id="email"
-                                type="email"
+                                type="text"
                                 className="form-control"
                                 placeholder="Enter your email"
                                 value={email}
