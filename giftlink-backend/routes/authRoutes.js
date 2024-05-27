@@ -1,3 +1,4 @@
+/*jshint esversion: 8 */
 //Step 1 - Task 2: Import necessary packages
 const dotenv = require('dotenv');
 const express = require('express');
